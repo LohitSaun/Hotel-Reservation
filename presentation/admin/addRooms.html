@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            display: block;
+            width: 100%;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .room-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center; /* Center cards horizontally */
+        }
+        .room-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 15px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            flex: 1 1 calc(33% - 20px); /* Ensure cards have consistent size */
+            max-width: calc(33% - 20px);
+        }
+        .room-card:hover {
+            transform: scale(1.03);
+        }
+        .room-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .room-card .details {
+            padding: 15px;
+        }
+        .room-card .details h3 {
+            margin: 0 0 10px;
+            font-size: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .room-card .details p {
+            margin: 5px 0;
+            color: #555;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .room-card .details .price {
+            font-weight: bold;
+            color: #4CAF50;
+            margin-top: 10px;
+        }
+        #addRoomForm {
+            margin-top: 20px;
+            display: none;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .form-section input, .form-section select {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Add Room</h1>
+    </header>
+    <div class="container">
+        <div id="homeSection">
+            <button id="showAddRoomForm">Add Room</button>
+            <form id="addRoomForm">
+                <div class="form-section">
+                    <input type="text" id="roomType" placeholder="Room Type" />
+                    <input type="text" id="amenities" placeholder="Amenities" />
+                    <input type="number" id="price" placeholder="Price" />
+                    <select id="availability">
+                        <option value="true">Available</option>
+                        <option value="false">Not Available</option>
+                    </select>
+                    <button type="button" id="addRoomBtn">Add Room</button>
+                </div>
+            </form>
+            <div class="room-list" id="roomList"></div>
+        </div>
+    </div>
+    <script>
+        const API_URL = "http://localhost:3000"; // Replace with your backend URL
+
+        // Fetch and display rooms
+        async function fetchAndDisplayRooms() {
+            try {
+                const response = await fetch(`${API_URL}/rooms`);
+                const rooms = await response.json();
+                const roomList = document.getElementById('roomList');
+
+                roomList.innerHTML = '';
+                rooms.forEach(room => {
+                    const roomCard = document.createElement('div');
+                    roomCard.className = 'room-card';
+                    roomCard.innerHTML = `
+                        <img src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Room Image">
+                        <div class="details">
+                            <h3>${room.type}</h3>
+                            <p><strong>Amenities:</strong> ${room.amenities}</p>
+                            <p><strong>Availability:</strong> ${room.availability ? 'Available' : 'Not Available'}</p>
+                            <p class="price">Price: $${room.price}</p>
+                        </div>
+                    `;
+                    roomList.appendChild(roomCard);
+                });
+            } catch (err) {
+                console.error('Error fetching rooms:', err);
+                alert('Failed to load rooms');
+            }
+        }
+
+        fetchAndDisplayRooms();
+
+        // Toggle Add Room Form
+        document.getElementById("showAddRoomForm").addEventListener("click", () => {
+            const form = document.getElementById("addRoomForm");
+            form.style.display = form.style.display === "none" ? "block" : "none";
+        });
+
+        // Add Room
+        document.getElementById("addRoomBtn").addEventListener("click", async () => {
+            const type = document.getElementById("roomType").value;
+            const amenities = document.getElementById("amenities").value;
+            const price = document.getElementById("price").value;
+            const availability = document.getElementById("availability").value;
+
+            if (!type || !amenities || !price) {
+                alert("Please fill in all fields");
+                return;
+            }
+
+            const token = localStorage.getItem("authToken");
+
+            try {
+                const response = await fetch(`${API_URL}/rooms`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ type, amenities, price, availability }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert("Room added successfully");
+                    fetchAndDisplayRooms();
+                } else {
+                    alert(data.error || "Failed to add room");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error adding room");
+            }
+        });
+    </script>
+</body>
+</html>

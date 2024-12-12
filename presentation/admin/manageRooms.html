@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rooms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #roomsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .room-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .room-card:hover {
+            transform: scale(1.05);
+        }
+
+        .room-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .room-card-content {
+            padding: 16px;
+            flex-grow: 1;
+        }
+
+        .room-card h3 {
+            margin: 0 0 8px;
+            color: #333;
+        }
+
+        .room-card p {
+            margin: 8px 0;
+            color: #555;
+        }
+
+        .room-card button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 8px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .room-card button:hover {
+            background-color: #0056b3;
+        }
+
+        #editRoomForm {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        #editRoomForm input, #editRoomForm label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Manage Rooms</h1>
+
+    <!-- Overlay -->
+    <div id="overlay"></div>
+
+    <!-- Edit Room Form -->
+    <div id="editRoomForm">
+        <h2>Edit Room</h2>
+        <input type="hidden" id="editRoomId" />
+        <label for="editRoomType">Room Type:</label>
+        <input type="text" id="editRoomType" />
+        <label for="editAmenities">Amenities (comma-separated):</label>
+        <input type="text" id="editAmenities" />
+        <label for="editPrice">Price:</label>
+        <input type="number" id="editPrice" />
+        <label>
+            <input type="checkbox" id="editAvailability" /> Available
+        </label>
+        <button onclick="submitEditRoom()">Save Changes</button>
+        <button onclick="cancelEditRoom()">Cancel</button>
+    </div>
+
+    <!-- Room List -->
+    <div id="roomsContainer">
+        <h2>Room List</h2>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:3000"; // Replace with your API URL
+
+        async function fetchRooms() {
+            const token = localStorage.getItem("authToken");
+            console.log("token:", token);
+
+            try {
+                const response = await fetch(`${API_URL}/rooms`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                const rooms = await response.json();
+                renderRooms(rooms);
+            } catch (err) {
+                console.error(err);
+                alert("Error fetching rooms");
+            }
+        }
+
+        function renderRooms(rooms) {
+            const container = document.getElementById("roomsContainer");
+            container.innerHTML = "";
+
+            if (rooms.length === 0) {
+                container.innerHTML = "<p>No rooms available.</p>";
+                return;
+            }
+
+            rooms.forEach((room) => {
+                const roomCard = document.createElement("div");
+                roomCard.className = "room-card";
+
+                // Static image for each card
+                const roomImage = "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=600"; // Replace with a proper image URL if needed
+
+                roomCard.innerHTML = `
+                    <img src="${roomImage}" alt="Room Image" />
+                    <div class="room-card-content">
+                        <h3>${room.type}</h3>
+                        <p><strong>Amenities:</strong> ${room.amenities}</p>
+                        <p><strong>Price:</strong> $${room.price}</p>
+                        <p><strong>Availability:</strong> ${room.availability ? "Yes" : "No"}</p>
+                        <button onclick="showEditRoomForm(${room.id}, '${room.type}', '${room.amenities}', ${room.price}, ${room.availability})">Edit</button>
+                        <button onclick="deleteRoom(${room.id})">Delete</button>
+                    </div>
+                `;
+
+                container.appendChild(roomCard);
+            });
+        }
+
+        async function deleteRoom(id) {
+            const token = localStorage.getItem("authToken");
+            console.log("token:", token);
+
+            try {
+                const response = await fetch(`${API_URL}/rooms/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert("Room deleted successfully");
+                    fetchRooms();
+                } else {
+                    alert(data.error || "Failed to delete room");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error deleting room");
+            }
+        }
+
+        function showEditRoomForm(id, type, amenities, price, availability) {
+            document.getElementById("editRoomId").value = id;
+            document.getElementById("editRoomType").value = type;
+            document.getElementById("editAmenities").value = amenities;
+            document.getElementById("editPrice").value = price;
+            document.getElementById("editAvailability").checked = availability;
+
+            document.getElementById("editRoomForm").style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        function cancelEditRoom() {
+            document.getElementById("editRoomForm").style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+        }
+
+        async function submitEditRoom() {
+            const id = document.getElementById("editRoomId").value;
+            const type = document.getElementById("editRoomType").value;
+            const amenities = document.getElementById("editAmenities").value;
+            const price = document.getElementById("editPrice").value;
+            const availability = document.getElementById("editAvailability").checked;
+
+            if (!type || !amenities || !price) {
+                alert("Please fill in all fields");
+                return;
+            }
+
+            const token = localStorage.getItem("authToken");
+            console.log("token:", token);
+
+            try {
+                const response = await fetch(`${API_URL}/rooms/edit/${id}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        type,
+                        amenities: amenities.split(","),
+                        price: parseFloat(price),
+                        availability,
+                    }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert("Room updated successfully");
+                    fetchRooms();
+                    cancelEditRoom();
+                } else {
+                    alert(data.error || "Failed to update room");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error updating room");
+            }
+        }
+
+        // Fetch rooms on page load
+        fetchRooms();
+    </script>
+</body>
+</html>

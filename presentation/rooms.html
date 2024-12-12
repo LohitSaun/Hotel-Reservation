@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Rooms</title>
+    <style>
+        /* Basic reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            color: #333;
+        }
+
+        /* Header */
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px 20px;
+            text-align: left;
+        }
+
+        nav {
+            display: flex;
+            justify-content: flex-end; /* Align items to the right */
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 10px 0;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #f44336; /* Change text color on hover */
+        }
+
+        /* Main section */
+        main {
+            padding: 40px 20px;
+        }
+
+        /* Rooms container */
+        #roomsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Room card styling */
+        .room-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .room-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .room-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .room-card h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-top: 15px;
+        }
+
+        .room-card .room-details {
+            padding: 15px;
+            color: #666;
+        }
+
+        .room-card .room-details p {
+            margin: 10px 0;
+            font-size: 1rem;
+        }
+
+        .room-card .room-details p strong {
+            font-weight: bold;
+        }
+
+        /* Background styling */
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Our Rooms</h1>
+        <nav>
+            <ul>
+                <li><a href="newHome.html">Back to Home</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <div id="roomsContainer">
+            <p>Loading rooms...</p>
+        </div>
+    </main>
+    <script>
+        const API_URL = "http://localhost:3000"; // Update with your API's base URL
+        const roomsContainer = document.getElementById("roomsContainer");
+
+        async function fetchRooms() {
+            try {
+                const response = await fetch(`${API_URL}/rooms`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch rooms");
+                }
+                const rooms = await response.json();
+                displayRooms(rooms);
+            } catch (err) {
+                roomsContainer.innerHTML = `<p>Error: ${err.message}</p>`;
+            }
+        }
+
+        function displayRooms(rooms) {
+            if (rooms.length === 0) {
+                roomsContainer.innerHTML = "<p>No rooms available</p>";
+                return;
+            }
+
+            roomsContainer.innerHTML = ""; // Clear the loading message
+            rooms.forEach((room) => {
+                const roomCard = document.createElement("div");
+                roomCard.classList.add("room-card");
+                roomCard.innerHTML = `
+                    <img src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Room Image">
+                    <div class="room-details">
+                        <h3>${room.type}</h3>
+                        <p><strong>Amenities:</strong> ${room.amenities}</p>
+                        <p><strong>Price:</strong> $${room.price}</p>
+                    </div>
+                `;
+                roomsContainer.appendChild(roomCard);
+            });
+        }
+
+        fetchRooms();
+    </script>
+</body>
+</html>

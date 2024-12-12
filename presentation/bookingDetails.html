@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Bookings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .booking-list {
+            list-style: none;
+            padding: 0;
+        }
+        .booking-item {
+            background: #f9f9f9;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .booking-item button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        .booking-item button:hover {
+            background-color: #e53935;
+        }
+        .room-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Your Bookings</h1>
+    </header>
+    <div class="container">
+        <h2>Your current bookings:</h2>
+        <ul id="bookingList" class="booking-list"></ul>
+    </div>
+    <script>
+        const API_URL = "http://localhost:3000"; // Replace with your backend URL
+
+        // Fetch and display bookings for a user
+        async function fetchAndDisplayBookings() {
+            try {
+                // Get the logged-in user's ID dynamically from the JWT token
+                const user_id = getUserIdFromJWT();
+                if (!user_id) {
+                    return; // Exit if the user ID is not found
+                }
+
+                // Fetch bookings for the logged-in user, passing the user_id as a query parameter
+                const response = await fetch(`${API_URL}/bookings/bookings?user_id=${user_id}`);
+                const bookings = await response.json();
+
+                // Check if the response contains bookings
+                if (Array.isArray(bookings) && bookings.length > 0) {
+                    const bookingList = document.getElementById('bookingList');
+                    bookingList.innerHTML = '';  // Clear any existing bookings
+
+                    bookings.forEach(booking => {
+                        const bookingItem = document.createElement('li');
+                        bookingItem.className = 'booking-item';
+                        bookingItem.innerHTML = `
+                            <img src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Room Image" class="room-image">
+                            <p><strong>Room Type:</strong> ${booking.room_type}</p>
+                            <p><strong>Check-in:</strong> ${booking.check_in}</p>
+                            <p><strong>Check-out:</strong> ${booking.check_out}</p>
+                            <button onclick="cancelBooking(${booking.id})">Cancel Booking</button>
+                        `;
+                        bookingList.appendChild(bookingItem);
+                    });
+                } else {
+                    alert('No bookings found');
+                }
+            } catch (err) {
+                console.error('Error fetching bookings:', err);
+                alert('Failed to load bookings');
+            }
+        }
+
+        // Function to cancel a booking
+        async function cancelBooking(bookingId) {
+            try {
+                console.log("booking id:", bookingId);
+
+                const response = await fetch(`${API_URL}/bookings/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ booking_id: bookingId }),
+                });
+                const result = await response.json();
+                alert(result.message);
+                fetchAndDisplayBookings(); // Refresh the bookings after canceling
+            } catch (err) {
+                console.error('Error canceling booking:', err);
+                alert('Failed to cancel booking');
+            }
+        }
+
+        fetchAndDisplayBookings();
+
+        function getUserIdFromJWT() {
+            const token = localStorage.getItem('authToken'); // Assuming the JWT is stored in localStorage
+            console.log("jwt called token ", token)
+            if (token) {
+                const payload = JSON.parse(atob(token.split('.')[1]));  // Decode the JWT payload
+                console.log("payload id", payload.id)
+                return payload.id;  // Assuming the user ID is stored in the token's payload
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>

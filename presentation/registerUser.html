@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('https://wallpapercave.com/wp/wp4611912.jpg') no-repeat center center/cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .register-container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .register-container h2 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            color: #fff;
+        }
+
+        .register-container input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .register-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .register-container button:hover {
+            background-color: #218838;
+        }
+
+        .register-container a {
+            display: inline-block;
+            margin-top: 15px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .register-container a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <h2>Register</h2>
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <input type="text" id="name" placeholder="Full Name" required />
+        <button id="registerBtn">Register</button>
+        <a href="login.html">Already have an account? Login</a>
+    </div>
+
+    <script>
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+
+            if (email && password && name) {
+                try {
+                    const response = await fetch('http://localhost:3000/users/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, name })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert('Registration successful!');
+                        window.location.href = 'login.html'; // Redirect to login page
+                    } else {
+                        alert(data.error);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('An error occurred. Please try again later.');
+                }
+            } else {
+                alert('All fields are required.');
+            }
+        });
+    </script>
+
+</body>
+</html>

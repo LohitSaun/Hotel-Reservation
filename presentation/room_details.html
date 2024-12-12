@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .card img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .card .room-info {
+            margin-top: 1rem;
+        }
+
+        .card .room-info h2 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .card .room-info p {
+            font-size: 1.1rem;
+            margin: 1rem 0;
+        }
+
+        .card .room-info .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .card .book-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .card .book-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .card {
+                padding: 1rem;
+            }
+
+            .card .room-info h2 {
+                font-size: 1.5rem;
+            }
+
+            .card .room-info p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img id="roomImage" src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Room Image">
+        <h2 id="roomType">Room Type</h2>
+        <p id="roomAmenities"><strong>Amenities:</strong></p>
+        <p id="roomAvailability"><strong>Availability:</strong></p>
+        <p id="roomPrice"><strong>Price:</strong></p>
+        <button class="book-btn" onclick="bookRoom()">Book Now</button>
+        <p id="bookingMessage" style="color: green; display: none;"></p>
+    </div>
+
+  
+
+    <script>
+        // Fetch room details from the backend or URL parameters
+        document.addEventListener("DOMContentLoaded", function () {
+            const roomId = new URLSearchParams(window.location.search).get('room_id');
+            const checkIn = new URLSearchParams(window.location.search).get('check_in');
+            const checkOut = new URLSearchParams(window.location.search).get('check_out');
+            console.log("room selected room id:"+roomId)
+            console.log("room selected check_in:"+checkIn)
+            console.log("room selected check_out:"+checkOut)
+            
+
+            if (!roomId) {
+                console.log("no room selected")
+                alert('No room selected!');
+                return;
+            }
+
+            console.log("room selected")
+
+            // Example of how to fetch room data (you may use an API here)
+            fetch(`http://localhost:3000/rooms/${roomId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Populate room details on the page
+                    document.getElementById('roomType').innerText = data.type;
+                    // document.getElementById('roomDescription').innerText = data.description;
+                    // document.getElementById('roomImage').src = data.image_url;
+                    document.getElementById('roomAmenities').innerText = `Amenities: ${data.amenities}`;
+                    document.getElementById('roomAvailability').innerText = data.availability ? 'Availability : Available' : 'Availability : Not Available';
+                    document.getElementById('roomPrice').innerText = `₹${data.price}`;
+                })
+                .catch(error => {
+                    console.error('Error fetching room details:', error);
+                });
+        });
+
+        function getUserIdFromJWT() {
+            
+
+    const token = localStorage.getItem('authToken'); // Assuming the JWT is stored in localStorage
+    console.log("jwt called token ", token)
+    if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));  // Decode the JWT payload
+        return payload.id;  // Assuming the user ID is stored in the token's payload
+    }
+    return null;
+}
+
+const userId = getUserIdFromJWT();
+
+console.log("jwt called user id:",userId)
+
+
+
+
+
+        // Function to handle booking the room
+        function bookRoom() {
+            const roomId = new URLSearchParams(window.location.search).get('room_id');
+            const checkinDate = new URLSearchParams(window.location.search).get('check_in');
+            const checkoutDate = new URLSearchParams(window.location.search).get('check_out');
+
+            getUserIdFromJWT();
+
+            console.log(" room id:"+roomId)
+            console.log(" check_in:"+checkinDate)
+            console.log(" check_out:"+checkoutDate)
+            
+            // Ensure dates are available
+            if (!checkinDate || !checkoutDate) {
+                alert('Please provide valid check-in and check-out dates.');
+                return;
+            }
+
+            // Send the booking request to the backend
+            fetch('http://localhost:3000/bookings/book', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId, 
+                    room_id: roomId,
+                    check_in: checkinDate,
+                    check_out: checkoutDate,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error booking the room:', error);
+            });
+        }
+    </script>
+
+</body>
+</html>
